@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from beamformer import backproject_all_airsas_measurements
 import numpy as np
 import pickle
-from utils import resample_cylindrical
+from .utils import resample_cylindrical
 import torch
 import scipy
 

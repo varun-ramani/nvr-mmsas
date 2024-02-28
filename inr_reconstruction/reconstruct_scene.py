@@ -1,18 +1,18 @@
 import argparse
 import torch
 import commentjson as json
-from utils import divide_chunks
+from .utils import divide_chunks
 import os
 import glob
 import numpy as np
 import pickle
 import constants as c
-from utils import aggressive_crop_weights, normalize
+from .utils import aggressive_crop_weights, normalize
 from sas_utils import hilbert_torch, figure_to_tensorboard, safe_normalize, matplotlib_render, range_normalize, find_indeces_within_scene
 import matplotlib.pyplot as plt
 from tqdm import tqdm, trange
 import random
-from network import Network
+from .network import Network
 import shutil
 from argument_io import directory_cleaup
 from forward_model import scattering_model, transmission_model
@@ -21,9 +21,9 @@ import time
 import math
 from torch.utils.tensorboard import SummaryWriter
 from reconstruct_scene_parser import *
-from logging_utils import *
-from timing_utils import *
-from render_utils import set_axes_equal, _set_axes_radius
+from .logging_utils import *
+from .timing_utils import *
+from .render_utils import set_axes_equal, _set_axes_radius
 import pdb
 
 if __name__ == '__main__':

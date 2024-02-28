@@ -8,7 +8,7 @@ from sas_utils import precompute_time_series, no_rc_kernel_from_waveform, radial
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from utils import divide_chunks
+from .utils import divide_chunks
 from argument_io import directory_cleaup
 import warnings
 import scipy
