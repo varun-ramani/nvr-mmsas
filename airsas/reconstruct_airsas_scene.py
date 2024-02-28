@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from beamformer import backproject_all_airsas_measurements
 import numpy as np
 import pickle
-from utils import process_folder
+from .utils import process_folder
 import torch
 import scipy
 import scipy.io

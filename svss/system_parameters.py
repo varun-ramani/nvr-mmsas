@@ -3,7 +3,7 @@ import h5py
 import os
 import matplotlib.pyplot as plt
 from ping_data import PingData
-from utils import log_img, modulate
+from .utils import log_img, modulate
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import csv
 from bs4 import BeautifulSoup

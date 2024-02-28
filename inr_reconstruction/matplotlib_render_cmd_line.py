@@ -1,4 +1,4 @@
-from utils import save_3d_matplotlib_scene
+from .utils import save_3d_matplotlib_scene
 import argparse
 import numpy as np
 

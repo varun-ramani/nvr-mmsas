@@ -4,7 +4,7 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-from utils import normalize_vector
+from .utils import normalize_vector
 
 
 """This class defines the array geometry and implements functions for snapping the array to the world grid"""

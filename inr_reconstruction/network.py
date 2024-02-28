@@ -4,7 +4,7 @@ from sas_utils import safe_normalize
 import torch.nn as nn
 import torch.nn.functional as F
 from functools import partial
-from utils import custom_grid_sample_3d
+from .utils import custom_grid_sample_3d
 import constants as c
 
 class MLP(torch.nn.Module):

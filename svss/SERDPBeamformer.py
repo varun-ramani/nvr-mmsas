@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from utils import skew_symm_cp, plot_scene_geometry
+from .utils import skew_symm_cp, plot_scene_geometry
 
 # Full SAS reconstruction of SERDP track.
 # Uses direction of TX/RX transducers to ensure we only reconstruct voxels that fall within the beamwidth of

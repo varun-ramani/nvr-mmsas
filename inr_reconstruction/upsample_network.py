@@ -2,7 +2,7 @@ import torch
 import os
 from network import Network
 import commentjson as json
-from utils import divide_chunks
+from .utils import divide_chunks
 from tqdm import tqdm
 from geometry import create_voxels
 import constants as c

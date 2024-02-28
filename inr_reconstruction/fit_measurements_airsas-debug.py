@@ -9,7 +9,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from utils import inr_fit_sampling, divide_chunks
+from .utils import inr_fit_sampling, divide_chunks
 from tqdm import tqdm
 import pdb
 from sas_utils import gen_real_lfm

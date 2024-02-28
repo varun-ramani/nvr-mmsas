@@ -1,5 +1,5 @@
 import argparse
-from utils import process_folder, load_img_and_preprocess
+from .utils import process_folder, load_img_and_preprocess
 import os
 import numpy as np
 from geometry import create_voxels
