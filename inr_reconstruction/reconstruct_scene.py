@@ -20,7 +20,7 @@ from sampling import SceneSampler, normalize_vectors
 import time
 import math
 from torch.utils.tensorboard import SummaryWriter
-from reconstruct_scene_parser import *
+from .reconstruct_scene_parser import *
 from .logging_utils import *
 from .timing_utils import *
 from .render_utils import set_axes_equal, _set_axes_radius

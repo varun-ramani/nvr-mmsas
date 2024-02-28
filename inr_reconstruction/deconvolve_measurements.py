@@ -12,7 +12,7 @@ from .utils import divide_chunks
 from argument_io import directory_cleaup
 import warnings
 import scipy
-from deconv_gd import GradientDescentDeconvolution
+from .deconv_gd import GradientDescentDeconvolution
 import time
 
 if __name__ == '__main__':
