@@ -1,12 +1,16 @@
 # Neural Volumetric Reconstructions for Coherent Synthetic Aperture Sonar
 
 Codebase for [Neural Volumetric Reconstructions for Coherent Synthetic Aperture Sonar](https://arxiv.org/abs/2306.09909) 
-by Albert W. Reed, Juhyeon Kim, Thomas Blanford, Adithya Pediredla, Daniel C. Brown, and Suren Jayasuriya.
+by Albert W. Reed, Juhyeon Kim, Thomas Blanford, Adithya Pediredla, Daniel C. Brown, and Suren Jayasuriya. 
 
 <p align="center">
   <img src="./data/teaser.PNG" width="800"/>
 </p>
 
+# Varun's Notes
+To fix errors, I modified the `reconstruct_high_mem.sh` script so that it needs
+to be run from the `nvr-mmsas` project root as
+`scenes/airsas/arma_20k/reconstruct_high_mem.sh`. 
 
 # Installation
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export SCRIPT_LOCATION="$(dirname $(readlink -e $0))"
+echo "reconstruct_high_mem.sh running from $SCRIPT_LOCATION"
+
 echo $1
 echo $2
 
