@@ -8,7 +8,7 @@ echo "EXPERIMENT_NAME=$2"
 echo $3
 
 echo "Starting reconstructing using backprojection (the conventional method)"
-python airsas/reconstruct_from_system_file.py \
+python -m airsas.reconstruct_from_system_file \
   --orig_system_file $1 \
   --output_dir ./reconstructed_scenes  \
   --use_up_to 120 \
@@ -17,7 +17,7 @@ python airsas/reconstruct_from_system_file.py \
 
 
 echo "Starting pulse deconvolution (reconstruction step 1/2 of our method)"
-python inr_reconstruction/deconvolve_measurements.py \
+python -m inr_reconstruction.deconvolve_measurements \
   --inr_config $SCRIPT_LOCATION/pulse_deconvolve.json \
   --system_data $1 \
   --clear_output_dir \
@@ -31,7 +31,7 @@ python inr_reconstruction/deconvolve_measurements.py \
   --phase_loss 1e-4
 
 echo "Starting neural backprojection (reconstruction step 2/2 of our method)"
-python inr_reconstruction/reconstruct_scene.py \
+python -m inr_reconstruction.reconstruct_scene \
   --scene_inr_config $SCRIPT_LOCATION/nbp_config.json \
   --fit_folder ./deconvolved_measurements \
   --system_data $1 \
@@ -66,7 +66,7 @@ python inr_reconstruction/reconstruct_scene.py \
   --max_voxels 15000
 
 echo "Sampling network for scene exporting scene *.mat file"
-python inr_reconstruction/upsample_network_with_input_args.py \
+python -m inr_reconstruction.upsample_network_with_input_args \
   --exp_name $2 \
   --experiment_dir ./ \
   --inr_config $SCRIPT_LOCATION/nbp_config.json \
