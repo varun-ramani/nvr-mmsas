@@ -71,6 +71,7 @@ tensor_3d = torch.view_as_complex(torch.from_numpy(complex_data.view(np.float32)
 data = tensor_3d
 data = data.permute(1, 2, 0)
 data = data.reshape(240*15, 1200)
+original_data = data
 data = data.abs()
 
 from sklearn.model_selection import train_test_split
@@ -83,7 +84,7 @@ normalized_data = torch.empty_like(data)
 for i in range(data.shape[0]):  # Loop through each location
     min_val = data[i, :].min()
     max_val = data[i, :].max()
-    normalized_data[i, :] = 2 * (data[i, :] - min_val) / (max_val - min_val) - 1
+    normalized_data[i, :] = (data[i, :] - min_val) / (max_val - min_val)
 
 # Assuming 'samples' is your dataset
 samples, test_samples = train_test_split(normalized_data, test_size=0.2, random_state=42)
@@ -297,12 +298,12 @@ def grid_search_hyperparameters(lrs, lsparses, lphases, ltvs):
 if __name__ == "__main__":
     grid_search_hyperparameters(
         # lrs=[0.5e-3, 1e-3, 0.5e-2, 1e-2, 0.5e-1],
-        lr=[1e-2],
+        lrs=[1e-2],
         # lphases=[1e-4, 1e-3, 1e-2, 1e-1],
-        lphase=[1e-1, 1e3, 1e4, 1e5],
+        lphases=[1e-1, 1e3, 1e4, 1e5],
         # ltvs=[1e-4, 1e-3, 1e-2, 1e-1],
         ltvs=[1e-1, 1e3, 1e4, 1e5],
-        lsparses=[1e-4, 1e-3, 1e-2, 1e-1, 1, 1e2, 1e3]
+        lsparses=[1, 1.25, 1.5]
     )
         
 
