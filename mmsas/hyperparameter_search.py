@@ -56,7 +56,6 @@ def hilbert_torch(x):
 
 # In[3]:
 
-
 with h5py.File('run10_halfhat_deconv.mat', 'r') as file:
     data = file['outputMatrix'][()]  # Extract the dataset
 
@@ -68,23 +67,21 @@ complex_data.imag = data['imag']
 # Convert to a PyTorch tensor of complex type
 tensor_3d = torch.view_as_complex(torch.from_numpy(complex_data.view(np.float32).reshape(data.shape + (2,))))
 
+# reshape it and split back into real
 data = tensor_3d
 data = data.permute(1, 2, 0)
 data = data.reshape(240*15, 1200)
-original_data = data
-data = data.abs()
+
+# normalize the real and imaginary components separately 
+real_data = torch.view_as_real(data)
+mins = real_data.min(axis=1).values
+maxes = real_data.max(axis=1).values
+normalized_data = (
+    (real_data - mins[:, np.newaxis, :]) 
+    / (maxes - mins)[:, np.newaxis, :]
+)
 
 from sklearn.model_selection import train_test_split
-
-data = data.reshape(240*15, 1200)
-
-normalized_data = torch.empty_like(data)
-
-# Normalize each waveform individually for real and imaginary parts
-for i in range(data.shape[0]):  # Loop through each location
-    min_val = data[i, :].min()
-    max_val = data[i, :].max()
-    normalized_data[i, :] = (data[i, :] - min_val) / (max_val - min_val)
 
 # Assuming 'samples' is your dataset
 samples, test_samples = train_test_split(normalized_data, test_size=0.2, random_state=42)
@@ -116,6 +113,35 @@ class ComplexMLP(nn.Module):
         x = self.fc4(x)
         return x
 
+def compute_loss(lsparse, lphase, ltv, samples, weights):
+    # create complex abs weights
+    complex_abs_weights = torch.view_as_complex(weights).abs()
+
+    # compute all losses
+    sparsity_loss = lsparse * torch.mean(complex_abs_weights)
+    est_wfm = np.squeeze(weights[:,:,1])
+    complex_wfm = hilbert_torch(est_wfm)
+    est_wfm_angle = torch.angle(complex_wfm)
+    phase_loss = lphase * ((torch.mean(torch.abs(torch.cos(est_wfm_angle[:, 1:]) -
+                                                        torch.cos(est_wfm_angle[:, :-1])))
+                + torch.mean(torch.abs(torch.sin(est_wfm_angle[:, 1:]) -
+                                                    torch.sin(est_wfm_angle[:, :-1])))))
+
+    tv_loss = ltv * torch.mean(torch.abs(est_wfm[:, 1:] - est_wfm[:, :-1]))
+    loss = torch.nn.functional.mse_loss(weights,
+                                        samples,
+                                        reduction='mean') 
+    
+    total_loss = loss + phase_loss + tv_loss + sparsity_loss 
+
+    return (
+        sparsity_loss,
+        phase_loss,
+        tv_loss,
+        loss,
+        total_loss
+    )
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def try_hyperparameter_combo(lr=1e-3, lphase=1e-4, ltv=1e-4, lsparse=2e-2):
@@ -143,33 +169,23 @@ def try_hyperparameter_combo(lr=1e-3, lphase=1e-4, ltv=1e-4, lsparse=2e-2):
         model.train()
         for batch_num, trans_batch in enumerate(trans):
             optimizer.zero_grad()
-        #     print("Batch", batch_num)
-        #     print(trans_batch)
 
-            samples_batch_all = samples[trans_batch,:]
-            samples_torch = torch.clone(samples_batch_all).detach().to(device)
-            sample_batch = samples_batch_all.reshape(-1,1)
-            #print(np.shape(sample_batch))
-            sample_batch = torch.clone(sample_batch).detach().to(device)
-            weights = model(sample_batch)
-            weights = weights.reshape(np.size(trans_batch), 1200)
+            # load in new sample and feed into deconv model
+            samples_batch_all = samples[trans_batch]
+            weights = model(samples_batch_all)
 
-            sparsity_loss = lsparse * torch.mean(torch.abs(weights))
-            est_wfm = np.squeeze(weights[:,1])
-            complex_wfm = hilbert_torch(est_wfm)
-            est_wfm_angle = torch.angle(complex_wfm)
-            phase_loss = lphase * ((torch.mean(torch.abs(torch.cos(est_wfm_angle[1:]) -
-                                                                torch.cos(est_wfm_angle[:-1])))
-                        + torch.mean(torch.abs(torch.sin(est_wfm_angle[1:]) -
-                                                                torch.sin(est_wfm_angle[:-1])))))
-
-            tv_loss = ltv * torch.mean(torch.abs(est_wfm[1:] - est_wfm[:-1]))
-
-            loss = torch.nn.functional.mse_loss(weights,
-                                                samples_torch,
-                                                reduction='mean') 
-            
-            total_loss = loss + phase_loss + tv_loss + sparsity_loss #+ phase_loss + tv_loss
+            # compute losses
+            (sparsity_loss,
+             phase_loss,
+             tv_loss,
+             loss,
+             total_loss) = compute_loss(
+                 lsparse,
+                 lphase,
+                 ltv,
+                 samples_batch_all,
+                 weights
+             )
 
             total_loss.backward()
             optimizer.step()
@@ -178,52 +194,28 @@ def try_hyperparameter_combo(lr=1e-3, lphase=1e-4, ltv=1e-4, lsparse=2e-2):
         sparsity_loss_history.append(sparsity_loss.item())
         tv_loss_history.append(tv_loss.item())
         mse_loss_history.append(loss.item())
-        # print(loss)
-        # print(phase_loss)
-        # print(tv_loss)
-        # print(sparsity_loss)
-        # print(total_loss)
-
-        # if (epoch + 1) % 20 == 0:
-            # checkpoint_path = os.path.join(output_dir, 'checkpoints', f'model_epoch_{epoch+1}.pth')
-            # torch.save(model.state_dict(), checkpoint_path)
-            # print("saving checkpoints")
-            
-        #if best_loss - total_loss.item() > min_delta:
-        #    best_loss = total_loss.item()
-        #    patience_counter = 0
-        #else:
-        #    patience_counter += 1
-        #    if patience_counter >= early_stopping_patience:
-        #        print(f"Stopping early at epoch {epoch}")
-        #        break
                 
         model.eval()
         with torch.no_grad():
-            test_samples_torch = torch.clone(test_samples).detach().to(device)
-            sample_batch = test_samples_torch.reshape(-1,1)
-            sample_batch = sample_batch.to(device)
-            weights = model(sample_batch)
-            weights = weights.reshape(np.shape(test_samples)[0], 1200)
-            
-            sparsity_loss = 2e-2 * torch.mean(torch.abs(weights))
-            est_wfm = np.squeeze(weights[:,1])
-            complex_wfm = hilbert_torch(est_wfm)
-            est_wfm_angle = torch.angle(complex_wfm)
-            phase_loss = 1e-4 * ((torch.mean(torch.abs(torch.cos(est_wfm_angle[1:]) -
-                                                                torch.cos(est_wfm_angle[:-1])))
-                        + torch.mean(torch.abs(torch.sin(est_wfm_angle[1:]) -
-                                                                torch.sin(est_wfm_angle[:-1])))))
-            tv_loss = 1e-4 * torch.mean(torch.abs(est_wfm[1:] - est_wfm[:-1]))
-            loss = torch.nn.functional.mse_loss(weights,
-                                                test_samples_torch,
-                                                reduction='mean')
-            test_loss = loss + phase_loss + tv_loss + sparsity_loss
-            
+            # feed all test samples into model
+            test_weights = model(test_samples)
+
+            # compute losses
+            (_,
+             _,
+             _,
+             _,
+             test_loss) = compute_loss(
+                 lsparse,
+                 lphase,
+                 ltv,
+                 samples_batch_all,
+                 weights
+             )
             
             test_loss_history.append(test_loss.item())
 
-    return total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples_torch.cpu(), weights.cpu()
+    return total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples.cpu(), test_weights.cpu()
 
 def plot_histories(output_dir, total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples_torch, weights):
     output_path = Path(output_dir)
