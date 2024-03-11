@@ -74,12 +74,14 @@ data = data.reshape(240*15, 1200)
 
 # normalize the real and imaginary components separately 
 real_data = torch.view_as_real(data)
-mins = real_data.min(axis=1).values
-maxes = real_data.max(axis=1).values
-normalized_data = (
-    (real_data - mins[:, np.newaxis, :]) 
-    / (maxes - mins)[:, np.newaxis, :]
-)
+# mins = real_data.min(axis=1).values
+# maxes = real_data.max(axis=1).values
+# normalized_data = (
+#     (real_data - mins[:, np.newaxis, :]) 
+#     / (maxes - mins)[:, np.newaxis, :]
+# )
+
+normalized_data = real_data
 
 from sklearn.model_selection import train_test_split
 
@@ -101,10 +103,10 @@ import numpy as np
 class ComplexMLP(nn.Module):
     def __init__(self):
         super(ComplexMLP, self).__init__()
-        self.fc1 = nn.Linear(1, 128)
+        self.fc1 = nn.Linear(2, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 1)  # Outputs real and imaginary parts for two values
+        self.fc4 = nn.Linear(128, 2)  # Outputs real and imaginary parts for two values
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -148,7 +150,7 @@ def try_hyperparameter_combo(lr=1e-3, lphase=1e-4, ltv=1e-4, lsparse=2e-2):
     model = ComplexMLP().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    trans = list(divide_chunks(list(range(0, np.shape(samples)[0])), 20))
+    trans = list(divide_chunks(list(range(0, np.shape(samples)[0])), 10))
 
     # Early stopping parameters
     early_stopping_patience = 20
@@ -163,7 +165,7 @@ def try_hyperparameter_combo(lr=1e-3, lphase=1e-4, ltv=1e-4, lsparse=2e-2):
     mse_loss_history = []
     test_loss_history = []
 
-    for epoch in range(10):
+    for epoch in range(3):
         print(f"starting epoch {epoch}")
 
         model.train()
@@ -215,9 +217,9 @@ def try_hyperparameter_combo(lr=1e-3, lphase=1e-4, ltv=1e-4, lsparse=2e-2):
             
             test_loss_history.append(test_loss.item())
 
-    return total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples.cpu(), test_weights.cpu()
+    return total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples.detach().cpu(), test_weights.detach().cpu()
 
-def plot_histories(output_dir, total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples_torch, weights):
+def plot_histories(output_dir, total_loss_history, sparsity_loss_history, tv_loss_history, mse_loss_history, test_loss_history, test_samples, test_weights):
     output_path = Path(output_dir)
     output_path.mkdir()
 
@@ -242,11 +244,30 @@ def plot_histories(output_dir, total_loss_history, sparsity_loss_history, tv_los
     plt.savefig(output_path / 'test_loss_over_epochs.png')
     plt.close()
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(weights[0, :], label='Final Signal')
-    plt.plot(test_samples_torch[0, :], label='Input Signal')
-    plt.legend()
-    plt.savefig(output_path / 'signal_results.png')
+    complex_abs_samples = torch.view_as_complex(test_samples).abs()[0, :]
+    complex_abs_weights = torch.view_as_complex(test_weights).abs()[0, :]
+    samples = test_samples[0, :, 0]
+    weights = test_weights[0, :, 0]
+
+    signals = [
+        ("Input Signal (Real)", samples),
+        ("Processed Signal (Real)", weights),
+        ("Input Signal (Complex Abs)", complex_abs_samples),
+        ("Processed Signal (Complex Abs)", complex_abs_weights)
+    ]
+
+    plt.figure(figsize=(10, 10))
+
+    for i, (title, signal) in enumerate(signals):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(signal.numpy(), label=title)
+        plt.title(title)
+        plt.xlabel('Index')
+        plt.ylabel('Value')
+        plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(output_path / 'signal_result.png')
     plt.close()
 
 def grid_search_hyperparameters(lrs, lsparses, lphases, ltvs):
