@@ -103,10 +103,19 @@ import numpy as np
 class ComplexMLP(nn.Module):
     def __init__(self):
         super(ComplexMLP, self).__init__()
-        self.fc1 = nn.Linear(2, 128)
+        self.fc1 = nn.Linear(1, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 2)  # Outputs real and imaginary parts for two values
+        self.fc4 = nn.Linear(128, 1)  # Outputs real and imaginary parts for two values
+
+        rng = torch.Generator(device)
+        rng.manual_seed(0)
+
+        nn.init.xavier_uniform_(self.fc1.weight, generator=rng)
+        nn.init.xavier_uniform_(self.fc2.weight, generator=rng)
+        nn.init.xavier_uniform_(self.fc3.weight, generator=rng)
+        nn.init.xavier_uniform_(self.fc4.weight, generator=rng)
+
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
