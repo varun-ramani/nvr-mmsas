@@ -138,7 +138,7 @@ if __name__ == "__main__":
         lphases=[1e-2, 1e-1, 1, 1e1, 1e2],
         lsparses=[0.3, 0.4, 0.5],
         epochs=4,
-        batch_size=10
+        batch_size=20
     )
         
 
