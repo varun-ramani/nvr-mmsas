@@ -97,10 +97,10 @@ def train_model(data, epochs=20, batch_size=10, rng=None, lr=1e-3, lphase=1e-4, 
             total_loss.backward()
             optimizer.step()
 
-        total_loss_history.append(total_loss.item())
-        sparsity_loss_history.append(sparsity_loss.item())
-        tv_loss_history.append(tv_loss.item())
-        mse_loss_history.append(loss.item())
+            total_loss_history.append(total_loss.item())
+            sparsity_loss_history.append(sparsity_loss.item())
+            tv_loss_history.append(tv_loss.item())
+            mse_loss_history.append(loss.item())
                 
         model.eval()
         with torch.no_grad():

@@ -131,11 +131,13 @@ def grid_search_hyperparameters(data, lrs, lsparses, lphases, ltvs, epochs=20, b
 if __name__ == "__main__":
     grid_search_hyperparameters(
         'run10_halfhat_deconv.mat',
-        lrs=[1e-3, 0.5e-2, 1e-2],
-        lphases=[1e-1, 1e3, 1e4, 1e5],
-        ltvs=[1e-1, 1e3, 1e4, 1e5],
+        lrs=[1e-3, 0.5e-2],
+        # lphases=[1, 1e2, 1e4],
+        # ltvs=[1, 1e2, 1e4],
+        lphases=[0],
+        ltvs=[0],
         lsparses=[0.2, 0.4, 0.6, 0.8, 1],
-        epochs=20,
+        epochs=2,
         batch_size=10
     )
         
