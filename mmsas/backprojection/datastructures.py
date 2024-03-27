@@ -1,10 +1,10 @@
 import torch
 
-def get_voxel_coordinates(x_start=-50, x_end=51, y_start=-50, y_end=51, z_start=90, z_end=220, d=1):
+def get_voxel_coordinates(x_start=-50, x_end=51, y_start=-50, y_end=51, z_start=90, z_end=221, d=1):
     return torch.cartesian_prod(
-        torch.arange(-50, 51, 1), # -50 to 50 inclusive
-        torch.arange(-50, 51, 1), # -50 to 50 inclusive
-        torch.arange(90, 220, 1) # 90 to 220 inclusive
+        torch.arange(x_start, x_end, d), # -50 to 50 inclusive
+        torch.arange(y_start, y_end, d), # -50 to 50 inclusive
+        torch.arange(z_start, z_end, d) # 90 to 220 inclusive
     )
 
 def get_angles_matrix(coords, n_rotor_step, n_actuator_step):
