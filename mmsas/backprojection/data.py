@@ -10,6 +10,7 @@ class ViconData:
     tx_ant_pos: torch.Tensor
     z_target_radius: torch.Tensor
     marker_locs: torch.Tensor
+    device: torch.device = torch.device('cpu')
 
     @property
     def n_rx(self):
@@ -31,11 +32,18 @@ class ViconData:
     def n_sample(self):
         return self.sar_data.shape[4]
     
-    def to(self, device: torch.device):
+    def to(self, device):
         """
         Put all fields onto the provided torch device and return a new ViconData object.
         """
-        kwargs = {}
+
+        if type(device) is not torch.device:
+            device = torch.device(device)
+
+        kwargs = {
+            'device': device
+        }
+
         for field in fields(self):
             value = getattr(self, field.name)
             if torch.is_tensor(value):
