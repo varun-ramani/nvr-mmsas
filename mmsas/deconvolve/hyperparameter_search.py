@@ -134,10 +134,12 @@ if __name__ == "__main__":
         lrs=[0.5e-2],
         # lphases=[1, 1e2, 1e4],
         # ltvs=[1, 1e2, 1e4],
-        ltvs=[1e-2, 1e-1, 1, 1e1, 1e2],
-        lphases=[1e-2, 1e-1, 1, 1e1, 1e2],
-        lsparses=[0.3, 0.4, 0.5],
-        epochs=4,
+        # ltvs=[1e-2, 1e-1, 1, 1e1, 1e2],
+        # lphases=[1e-2, 1e-1, 1, 1e1, 1e2],
+        lsparses=[0.4],
+        lphases=[0],
+        ltvs=[0],
+        epochs=2,
         batch_size=20
     )
         
