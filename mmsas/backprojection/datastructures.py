@@ -17,17 +17,21 @@ def get_angles_matrix(coords, n_rotor_step, n_actuator_step):
 
 def get_measurement_grid(marker_locs, radius, n_rotor_step, n_actuator_step):
     sensor_marker_height = marker_locs[:, 2, 3]
-    sensor_marker_height = sensor_marker_height.view(n_rotor_step, -1)
+
+    # we do this in order to preserve column-major order, as per MATLAB
+    sensor_marker_height = sensor_marker_height.view(-1, n_rotor_step).T
+
     heights = torch.mean(sensor_marker_height, dim=0)
-    heights = heights - 15 * torch.ones(30)
+    heights = heights - 15
 
-    table1 = marker_locs[:, :, 1]
-    angles1 = get_angles_matrix(table1, n_rotor_step, n_actuator_step)
+    # table1 = marker_locs[:, :, 1]
+    # angles1 = get_angles_matrix(table1, n_rotor_step, n_actuator_step)
 
-    table2 = marker_locs[:, :, 0]
-    angles2 = get_angles_matrix(table2, n_rotor_step, n_actuator_step)
+    # table2 = marker_locs[:, :, 0]
+    # angles2 = get_angles_matrix(table2, n_rotor_step, n_actuator_step)
 
-    final_angles = (angles1 + angles2) / 2
+    # final_angles = (angles1 + angles2) / 2
+
     final_angles = torch.linspace(0, 2 * torch.pi - torch.pi / 720, 1440).unsqueeze(1).repeat(1, 30)
 
     measurement_grid = torch.zeros(len(final_angles) * len(heights), 3)
