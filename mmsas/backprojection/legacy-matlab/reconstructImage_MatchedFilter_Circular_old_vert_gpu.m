@@ -150,29 +150,51 @@ processBar = waitbar(0,'Processing...');
 
 % fftsarData = fft(sarData,N,5);
 % distall = [];
-num_workers = 4;
+num_workers = 16;
 poolobj = check_my_parpool(num_workers);
 
+% Convert all necessary inputs to gpuArray for GPU computation
+voxelCoordinates = gpuArray(voxelCoordinates);
+measurement_grid = gpuArray(measurement_grid);
+txAntPos = gpuArray(txAntPos);
+rxAntPos = gpuArray(rxAntPos);
+sarData = gpuArray(sarData);
+sarImage = gpuArray(zeros(size(sarImage))); % Assuming sarImage is defined
 
-parfor mG = 1:length(measurement_grid)
-    lin = floor((mG-1)/Num_rotor_step) + startval; %1;
-    rot = (mod((mG-1),Num_rotor_step) + 1);
+% Constants
+k = gpuArray(k);
+startval = gpuArray(startval);
+Num_rotor_step = gpuArray(Num_rotor_step);
+
+% Pre-compute grid indexes and rotations to reduce overhead in loop
+lin = floor((gpuArray(1:length(measurement_grid))-1)/Num_rotor_step) + startval;
+rot = mod((gpuArray(1:length(measurement_grid))-1),Num_rotor_step) + 1;
+
+timer = tic;
+
+% Attempting partial vectorization
+parfor mG = 1:100
     for nT = 1:nTx
         for nR = 1:nRx
-            distTx = voxelCoordinates.* 1e-3 - (measurement_grid(mG,:)* 1e-3 + txAntPos(nT,:));
-            distRx = voxelCoordinates.* 1e-3 - (measurement_grid(mG,:)* 1e-3 + rxAntPos(nR,:));
-            disttot = sqrt((distRx(:,1)).^2 + (distRx(:,2)).^2 + (distRx(:,3)).^2) + sqrt((distTx(:,1)).^2 + (distTx(:,2)).^2 + (distTx(:,3)).^2);
+            distTx = bsxfun(@minus, voxelCoordinates .* 1e-3, (measurement_grid(mG,:) .* 1e-3 + txAntPos(nT,:)));
+            distRx = bsxfun(@minus, voxelCoordinates .* 1e-3, (measurement_grid(mG,:) .* 1e-3 + rxAntPos(nR,:)));
+            disttot = sqrt(sum(distRx.^2, 2)) + sqrt(sum(distTx.^2, 2));
 
-            matchedFilter = exp((disttot*k).*1i);
-%                 disp(matchedFilter);
-%                     disp(floor(disttot * deld2));
-            val = matchedFilter*squeeze(sarData(nR,nT,lin,rot,:));%fftsarData(nR,nT,1,mG,floor(disttot/deld));
+            matchedFilter = exp((disttot * k) .* 1i);
+            val = matchedFilter * squeeze(sarData(nR, nT, lin(mG), rot(mG), :));
+            val = sum(val,2);
             sarImage = sarImage + val;
         end
-    end     
+    end
+
+
+    disp(['GPU: finished parfor iteration. Minutes elapsed:' num2str(toc(timer) / 60)]);
 end
 
+% Convert the result back from gpuArray if necessary
+sarImage = gather(sarImage);
 
+disp(['GPU: done processing. Minutes elapsed:' num2str(toc(timer) / 60)]);
 
 % sarImage = sarImage.';
 
