@@ -5,17 +5,18 @@ from .data import ViconData
 from .datastructures import get_measurement_grid, get_voxel_coordinates
 from .process import backprojection_loop
 import sys
+from utils import device
 
-vicon_data = ViconData.read(sys.argv[1])
+vicon_data = ViconData.read(sys.argv[1]).to(device)
 
 measurement_grid = get_measurement_grid(
     vicon_data.marker_locs,
     vicon_data.z_target_radius,
     vicon_data.n_rotor_step,
     vicon_data.n_actuator_step
-)
+).to(device)
 
-voxel_coordinates = get_voxel_coordinates(d=int(sys.argv[2]))
+voxel_coordinates = get_voxel_coordinates(d=int(sys.argv[2])).to(device)
 
 result = backprojection_loop(vicon_data, measurement_grid, voxel_coordinates)
 

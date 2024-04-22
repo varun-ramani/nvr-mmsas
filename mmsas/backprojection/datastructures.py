@@ -1,4 +1,5 @@
 import torch
+from .utils import device
 
 def get_voxel_coordinates(x_start=-50, x_end=51, y_start=-50, y_end=51, z_start=90, z_end=221, d=1):
     x = torch.arange(x_start, x_end, d) # -50 to 50 inclusive
@@ -42,6 +43,10 @@ def get_measurement_grid(marker_locs, radius, n_rotor_step, n_actuator_step):
 
     measurement_grid = torch.zeros(len(final_angles) * len(heights), 3)
     count = 0
+
+    heights = heights.to(device)
+    final_angles = final_angles.to(device)
+    measurement_grid = measurement_grid.to(device)
 
     for xi in range(len(heights)):
         for theta in range(len(final_angles)):

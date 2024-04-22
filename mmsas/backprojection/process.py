@@ -1,6 +1,7 @@
 import torch
 from rich.progress import track
 from scipy.constants import speed_of_light
+from .utils import device
 
 def build_matched_filter(mg, voxel_coordinates, measurement_grid, vicon_data, k):
     dist_tx = (
@@ -37,14 +38,14 @@ def backprojection_loop(vicon_data, measurement_grid, voxel_coordinates):
 
     lin = torch.floor(
         torch.arange(0, measurement_grid.shape[0]) / vicon_data.n_rotor_step
-    ).type(torch.int64)
+    ).type(torch.int64).to(device)
 
     rot = torch.remainder(
         torch.arange(0, measurement_grid.shape[0]), 
         vicon_data.n_rotor_step
-    ).type(torch.int64)
+    ).type(torch.int64).to(device)
 
-    sar_image = torch.zeros(voxel_coordinates.shape[0], 1, dtype=torch.complex64).to(vicon_data.device)
+    sar_image = torch.zeros(voxel_coordinates.shape[0], 1, dtype=torch.complex64).to(device)
 
     for mg in track(list(range(measurement_grid.shape[0]))):
         matched_filter = build_matched_filter(mg, voxel_coordinates, measurement_grid, vicon_data, k)
