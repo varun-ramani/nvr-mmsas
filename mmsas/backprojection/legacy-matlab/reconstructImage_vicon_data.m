@@ -56,14 +56,28 @@ rot = mod((gpuArray(1:length(measurement_grid))-1),Num_rotor_step) + 1;
 num_workers = 4;
 poolobj = check_my_parpool(num_workers);
 
-parfor mG = 1:length(measurement_grid)
+disp('using updated bs');
+
+for mG = 1:50
+    disp(['running mg loop' num2str(mG)])
     for nT = 1:nTx
         for nR = 1:nRx
             distTx = bsxfun(@minus, voxelCoordinates .* 1e-3, (measurement_grid(mG,:) .* 1e-3 + txAntPos(nT,:)));
             distRx = bsxfun(@minus, voxelCoordinates .* 1e-3, (measurement_grid(mG,:) .* 1e-3 + rxAntPos(nR,:)));
             disttot = sqrt(sum(distRx.^2, 2)) + sqrt(sum(distTx.^2, 2));
             matchedFilter = exp((disttot * k) .* -1i);
-            val = matchedFilter * squeeze(sarData(nR, nT, lin(mG), rot(mG), :));
+
+            % distTx = gather(distTx);
+            % distRx = gather(distRx);
+            % matchedFilter = gather(matchedFilter);
+            % disttot = gather(disttot);
+            % voxelCoordinates = gather(voxelCoordinates);
+
+            % save("./matched_filter.mat", "distTx", "distRx", "matchedFilter", "disttot", 'voxelCoordinates')
+            % whos -file './matched_filter.mat'
+            squeezed_sar_data = squeeze(sarData(nR, nT, lin(mG), rot(mG), :));
+
+            val = matchedFilter * squeezed_sar_data;
             val = sum(val,2);
             sarImage = sarImage + val;
         end
