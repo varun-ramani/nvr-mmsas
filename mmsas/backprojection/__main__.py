@@ -5,7 +5,7 @@ from .data import ViconData
 from .datastructures import get_measurement_grid, get_voxel_coordinates
 from .process import backprojection_loop
 import sys
-from utils import device
+from .utils import device
 
 vicon_data = ViconData.read(sys.argv[1]).to(device)
 
